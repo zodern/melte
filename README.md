@@ -2,6 +2,8 @@
 
 Build [cybernetically enhanced web apps](https://svelte.dev) with Meteor and Svelte.
 
+Fork based on [meteor-svelte 4 beta](https://github.com/meteor-svelte/meteor-svelte/pull/30) with support for HMR using the hot-module-reload package.
+
 ## Installation
 
 To use `meteor-svelte`, run the following commands:
@@ -10,8 +12,6 @@ To use `meteor-svelte`, run the following commands:
 $ meteor add svelte:compiler
 $ meteor npm install svelte@<version>
 ```
-
-**Important:** The version of the `svelte` npm package should match the version of `svelte:compiler`.
 
 ## Options
 
