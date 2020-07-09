@@ -77,7 +77,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
     // Babel doesn't use the svelte or preprocessor versions in its cache keys
     // so we instead use the versions in the cache path
-    const babelSuffix = `-babel-${this.svelte.VERSION}-${PREPROCESS_VERSION}`
+    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}`
     this.babelCompiler.setDiskCacheDirectory(cacheDirectory + babelSuffix);
   }
 
