@@ -14,9 +14,16 @@ const recastParser = {
 
 const b = types.builders;
 
-const PREPROCESS_VERSION = 4;
 const TRACKER_WRAPPER_PREFIX = '_m_tracker'
 const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper'
+const { createMakeHot } = require('svelte-hmr');
+
+// PREPROCESS_VERSION should be incremented whenever the preprocessor
+// or HMR implementation is modified so that it produces different output
+// given the same input compared to an older version of the compiler
+const PREPROCESS_VERSION = 4;
+
+const PACKAGE_NAME = 'zodern:svelte';
 
 SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   constructor(options = {}) {
@@ -38,7 +45,17 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
           'Please install it with `meteor npm install `svelte`.'
         );
       }
+
+      this.makeHot = createMakeHot(
+        `meteor/${PACKAGE_NAME}/hmr-runtime.js`,
+        {
+          meta: 'module',
+          walk: this.svelte.walk,
+          absoluteImports: false
+        }
+      )
     }
+
 
     if (options.postcss) {
       this.postcss = postcss(options.postcss.map(plugin => {
@@ -52,12 +69,17 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
+  hmrAvailable() {
+    return !!global.__hotState;
+  }
+
   getCacheKey(file) {
     return [
       this.options,
       file.getPathInPackage(),
       file.getSourceHash(),
       file.getArch(),
+      this.hmrAvailable(),
       {
         svelteVersion: this.svelte.VERSION,
         preprocessVersion: PREPROCESS_VERSION
@@ -70,7 +92,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
     // Babel doesn't use the svelte or preprocessor versions in its cache keys
     // so we instead use the versions in the cache path
-    const babelSuffix = `-babel-${this.svelte.VERSION}-${PREPROCESS_VERSION}`
+    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}`
     this.babelCompiler.setDiskCacheDirectory(cacheDirectory + babelSuffix);
   }
 
@@ -288,9 +310,28 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       }
     })).code;
 
+    const compiledResult = this.svelte.compile(code, svelteOptions);
+
+    if (this.hmrAvailable()) {
+      compiledResult.js.code = this.makeHot(
+        path,
+        compiledResult.js.code,
+        {},
+        compiledResult,
+        code,
+        svelteOptions
+      );
+
+      // svelte-hmr adds an import with the wrong path
+      compiledResult.js.code = compiledResult.js.code.replace(
+        /import ___SVELTE_HMR_HOT_API_PROXY_ADAPTER from '.+svelte-hmr\/runtime\/proxy-adapter-dom.js'/,
+        `import ___SVELTE_HMR_HOT_API_PROXY_ADAPTER from 'meteor/${PACKAGE_NAME}/proxy-adapter.js'`
+      );
+    }
+
     try {
       return this.transpileWithBabel(
-        this.svelte.compile(code, svelteOptions).js,
+        compiledResult.js,
         path,
         file
       );
