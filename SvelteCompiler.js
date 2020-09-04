@@ -198,16 +198,23 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       }
     }
 
+    let error;
     code = (await this.svelte.preprocess(code, {
       script({ content, attributes }) {
         // Reactive statements are not supported in the module script
         if (attributes.context === 'module') {
           return;
         }
+        let ast;
 
-        const ast = parse(content, {
-          parser: recastParser
-        });
+        try {
+          ast = parse(content, {
+            parser: recastParser
+          });
+        } catch (e) {
+          error = e;
+          return content;
+        }
 
         let modified = false;
         let uniqueIdCount = 0;
@@ -311,7 +318,18 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       }
     })).code;
 
-    const compiledResult = this.svelte.compile(code, svelteOptions);
+    if (error) {
+      file.error(error);
+      return;
+    }
+
+    let compiledResult;
+    try {
+      compiledResult = this.svelte.compile(code, svelteOptions);
+    } catch (e) {
+      file.error(e);
+      return;
+    }
 
     if (this.hmrAvailable(file)) {
       compiledResult.js.code = this.makeHot(
