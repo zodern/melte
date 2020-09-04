@@ -18,12 +18,13 @@ const TRACKER_WRAPPER_PREFIX = '_m_tracker'
 const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper'
 const { createMakeHot } = require('svelte-hmr');
 
-// PREPROCESS_VERSION should be incremented whenever the preprocessor
-// or HMR implementation is modified so that it produces different output
-// given the same input compared to an older version of the compiler
-const PREPROCESS_VERSION = 4;
+// PREPROCESS_VERSION can be used in development
+// to invalidate caches
+// In a published package, the cache is reset
+// whenever the app updates to a new version.
+const PREPROCESS_VERSION = 7;
 
-const PACKAGE_NAME = 'zodern:svelte';
+const PACKAGE_NAME = 'zodern:melte';
 
 SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   constructor(options = {}) {
@@ -299,7 +300,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
                   b.identifier(TRACKER_WRAPPER_CREATOR)
                 )
               ],
-              b.literal('meteor/svelte:compiler/tracker')
+              b.literal(`meteor/${PACKAGE_NAME}/tracker`)
           ));
         }
 

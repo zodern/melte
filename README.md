@@ -2,15 +2,63 @@
 
 Build [cybernetically enhanced web apps](https://svelte.dev) with Meteor and Svelte.
 
-Fork based on [meteor-svelte 4 beta](https://github.com/meteor-svelte/meteor-svelte/pull/30) with support for HMR using the hot-module-reload package.
+Fork based on [meteor-svelte 4 beta](https://github.com/meteor-svelte/meteor-svelte/pull/30) two main changes:
+
+- Tracker statements
+- support for HMR using the hot-module-reload package.
 
 ## Installation
 
 To use `meteor-svelte`, run the following commands:
 
 ```
-$ meteor add svelte:compiler
-$ meteor npm install svelte@<version>
+$ meteor add zodern:melte
+$ meteor npm install svelte
+```
+
+### Tracker Statements
+
+In addition to the [$ reactive statements](https://svelte.dev/docs#3_$_marks_a_statement_as_reactive) Svelte normally supports, this adds a preprocessor to support `$m` tracker statements. Statements starting with the `$m:` label will rerun when either Tracker dependencies or dependencies detected by Svelte are invalidated.
+
+Example:
+
+```html
+<script>
+const Todos = new Mongo.Collection('todos');
+
+let sortDirection = 1;
+let subReady = false;
+
+// Tracker will unsubscribe when the Svelte component is destroyed
+$m: {
+  let sub = Meteor.subscribe('todos');
+  subReady = sub.ready();
+}
+
+// This will rerun whenever the documents are updated or sortDirection is changed
+$m: todos = Todos.find({}, { sort: { createdAt: sortDirection}}).fetch()
+
+// You can still use normal reactive statements
+$: completedCount = todos.filter(todo => todo.completed).length;
+</script>
+
+Sort by:
+<select bind:value="{sortDirection}">
+  <option value="-1">Oldest First</option>
+  <option value="1">Newest First</option>
+</select>
+
+{#if !subReady}
+  <p>Loading...</p>
+{/if}
+
+<ul>
+  {#each todos as todo}
+    <li>{todo.name} - {todo.createdAt}</li>
+  {/each}
+</ul>
+
+<p>{completedCount} completed</p>
 ```
 
 ## Options

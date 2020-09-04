@@ -1,7 +1,7 @@
 Package.describe({
-  name: 'zodern:svelte',
+  name: 'zodern:melte',
   version: '4.0.0',
-  summary: 'Svelte compiler',
+  summary: 'Svelte compiler with tracker integration and HMR',
   git: 'https://github.com/meteor-svelte/meteor-svelte.git',
   documentation: 'README.md'
 });
@@ -9,7 +9,7 @@ Package.describe({
 const hmrVersion = '0.8.0'
 
 Package.registerBuildPlugin({
-  name: 'svelte-compiler',
+  name: 'melte-compiler',
   use: [
     'babel-compiler@7.3.4',
     'caching-compiler@1.2.1',
@@ -36,15 +36,14 @@ Npm.depends({
 })
 
 Package.onUse(function (api) {
-  api.versionsFrom('1.8');
+  api.versionsFrom('1.8.2');
   api.use('isobuild:compiler-plugin@1.0.0');
-  api.use('modules');
+  api.use('modules', 'client');
   api.use('tracker', 'client');
-  api.addFiles('tracker.js', 'client');
 
-  api.use('modules');
-  api.addFiles('hmr-runtime.js', 'client');
-  api.addFiles('proxy-adapter.js', 'client');
+  api.addFiles('tracker.js', 'client');
+  api.addFiles('hmr-runtime.js', 'web.browser');
+  api.addFiles('proxy-adapter.js', 'web.browser');
 
 
   // Dependencies for compiled Svelte components (taken from `ecmascript`).
