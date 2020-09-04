@@ -8,6 +8,8 @@ Based on [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte/pull/30)
 - Support for hot module replacement (HMR) to update modified components without requiring a full page reload. Requires running [Meteor from checkout](https://github.com/meteor/meteor/pull/11117).
 - Handles syntax errors without crashing
 
+Compatible with Meteor 1.8.2 and newer.
+
 ## Installation
 
 To use `meteor-svelte`, run the following commands:
