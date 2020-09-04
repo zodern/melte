@@ -2,10 +2,11 @@
 
 Build [cybernetically enhanced web apps](https://svelte.dev) with Meteor and Svelte.
 
-Fork based on [meteor-svelte 4 beta](https://github.com/meteor-svelte/meteor-svelte/pull/30) two main changes:
+Based on [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte/pull/30) with the added features:
 
 - Tracker statements
-- support for HMR using the hot-module-reload package.
+- Support for hot module replacement (HMR) to update modified components without requiring a full page reload. Requires running [Meteor from checkout](https://github.com/meteor/meteor/pull/11117).
+- Handles syntax errors without crashing
 
 ## Installation
 
