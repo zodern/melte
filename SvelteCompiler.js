@@ -69,8 +69,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
-  hmrAvailable() {
-    return !!global.__hotState;
+  hmrAvailable(file) {
+    return !!global.__hotState && file.getArch() === 'web.browser' && file.getPackageName() === null;
   }
 
   getCacheKey(file) {
@@ -79,7 +79,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       file.getPathInPackage(),
       file.getSourceHash(),
       file.getArch(),
-      this.hmrAvailable(),
+      file.getPackageName(),
+      this.hmrAvailable(file),
       {
         svelteVersion: this.svelte.VERSION,
         preprocessVersion: PREPROCESS_VERSION
@@ -312,7 +313,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
     const compiledResult = this.svelte.compile(code, svelteOptions);
 
-    if (this.hmrAvailable()) {
+    if (this.hmrAvailable(file)) {
       compiledResult.js.code = this.makeHot(
         path,
         compiledResult.js.code,
