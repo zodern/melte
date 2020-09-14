@@ -36,15 +36,12 @@ Npm.depends({
 })
 
 Package.onUse(function (api) {
-  api.versionsFrom('1.8.2');
+  api.versionsFrom('1.8.1');
   api.use('isobuild:compiler-plugin@1.0.0');
   api.use('modules', 'client');
   api.use('tracker', 'client');
 
   api.addFiles('tracker.js', 'client');
-  api.addFiles('hmr-runtime.js', 'web.browser');
-  api.addFiles('proxy-adapter.js', 'web.browser');
-
 
   // Dependencies for compiled Svelte components (taken from `ecmascript`).
   api.imply([
