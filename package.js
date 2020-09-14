@@ -6,7 +6,7 @@ Package.describe({
   documentation: 'README.md'
 });
 
-const hmrVersion = '0.8.0'
+const hmrVersion = '0.10.2'
 
 Package.registerBuildPlugin({
   name: 'melte-compiler',
