@@ -21,7 +21,7 @@ $ meteor npm install svelte
 
 ### Tracker Statements
 
-In addition to the [$ reactive statements](https://svelte.dev/docs#3_$_marks_a_statement_as_reactive) Svelte normally supports, this adds a preprocessor to support `$m` tracker statements. Statements starting with the `$m:` label will rerun when either Tracker dependencies or dependencies detected by Svelte are invalidated.
+In addition to the [$ reactive statements](https://svelte.dev/docs#3_$_marks_a_statement_as_reactive) Svelte normally supports, this adds `$m` tracker statements. They behave the same as normal reactive statements, but also rerun whenever any Tracker dependencies they use are invalidated. Behind the scenes, it uses [`Tracker.autorun`](https://docs.meteor.com/api/tracker.html#Tracker-autorun).
 
 Example:
 
