@@ -1,6 +1,6 @@
 Package.describe({
   name: 'zodern:melte',
-  version: '1.1.0',
+  version: '1.1.1',
   summary: 'Svelte compiler with tracker integration and HMR',
   git: 'https://github.com/zodern/melte.git',
   documentation: 'README.md'
