@@ -27,7 +27,8 @@ Package.registerBuildPlugin({
     'source-map': '0.5.6',
     'recast': '0.19.0',
     'periscopic': '2.0.2',
-    'svelte-hmr': hmrVersion
+    'svelte-hmr': hmrVersion,
+    'acorn': '7.4.0'
   }
 });
 
