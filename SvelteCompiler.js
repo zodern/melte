@@ -71,7 +71,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   }
 
   hmrAvailable(file) {
-    return !!global.__hotState && file.getArch() === 'web.browser' && file.getPackageName() === null;
+    return typeof file.hmrAvailable === 'function' && file.hmrAvailable();
   }
 
   getCacheKey(file) {
