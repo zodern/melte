@@ -91,11 +91,13 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
   setDiskCacheDirectory(cacheDirectory) {
     this._diskCache = cacheDirectory;
+  }
 
+  _setBabelCacheDirectory(suffix) {
     // Babel doesn't use the svelte or preprocessor versions in its cache keys
     // so we instead use the versions in the cache path
-    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}`
-    this.babelCompiler.setDiskCacheDirectory(cacheDirectory + babelSuffix);
+    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}-${suffix || ''}`
+    this.babelCompiler.setDiskCacheDirectory(this._diskCache + babelSuffix);
   }
 
   // The compile result returned from `compileOneFile` can be an array or an
@@ -399,6 +401,11 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   }
 
   transpileWithBabel(source, path, file) {
+    // We need a different folder when HMR is enabled
+    // to prevent babel from using those cache entries
+    // in production builds
+    this._setBabelCacheDirectory(this.hmrAvailable(file) ? '-hmr' : '');
+
     const {
       data,
       sourceMap
