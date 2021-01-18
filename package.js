@@ -6,7 +6,7 @@ Package.describe({
   documentation: 'README.md'
 });
 
-const hmrVersion = '0.10.2'
+const hmrVersion = '0.12.3'
 
 Package.registerBuildPlugin({
   name: 'melte-compiler',
@@ -34,7 +34,7 @@ Package.registerBuildPlugin({
 
 Npm.depends({
   'svelte-hmr': hmrVersion
-})
+});
 
 Package.onUse(function (api) {
   api.versionsFrom('1.8.1');

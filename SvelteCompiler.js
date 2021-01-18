@@ -47,14 +47,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         );
       }
 
-      this.makeHot = createMakeHot(
-        {
+      this.makeHot = createMakeHot({
           meta: 'module',
           walk: this.svelte.walk,
           absoluteImports: false,
-          hotApi: `meteor/${PACKAGE_NAME}/hmr-runtime.js`
-        }
-      )
+          hotApi: `meteor/${PACKAGE_NAME}/hmr-runtime.js`,
+          preserveLocalState: false,
+          adapter: `meteor/${PACKAGE_NAME}/proxy-adapter.js`,
+      });
     }
 
 
@@ -342,12 +342,6 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         compiledResult,
         code,
         svelteOptions
-      );
-
-      // svelte-hmr adds an import with the wrong path
-      compiledResult.js.code = compiledResult.js.code.replace(
-        /import ___SVELTE_HMR_HOT_API_PROXY_ADAPTER from '.+svelte-hmr\/runtime\/proxy-adapter-dom.js'/,
-        `import ___SVELTE_HMR_HOT_API_PROXY_ADAPTER from 'meteor/${PACKAGE_NAME}/proxy-adapter.js'`
       );
 
       // makeHot is hard coded to use `import.meta` in some places

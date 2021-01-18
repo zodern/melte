@@ -2,9 +2,9 @@
   "lockfileVersion": 1,
   "dependencies": {
     "svelte-hmr": {
-      "version": "0.10.2",
-      "resolved": "https://registry.npmjs.org/svelte-hmr/-/svelte-hmr-0.10.2.tgz",
-      "integrity": "sha512-iUemGMQlqLjX9yK9pkEEl72tfip+A2L7iJKAa1W8LuXDyRvWrNcX03fTKSFfTscVSsdR/c4rAwVJ/Kxi4d9W4w=="
+      "version": "0.12.3",
+      "resolved": "https://registry.npmjs.org/svelte-hmr/-/svelte-hmr-0.12.3.tgz",
+      "integrity": "sha512-hyggTjuA6E/jWYltj8Q9B9sSumOqopBurwFcqwys4LUp7cCE0H0UC6uYyfvQlEdCCQokON/5E8bmHBOBDUUU9A=="
     }
   }
 }
