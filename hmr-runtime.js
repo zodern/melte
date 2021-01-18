@@ -30,7 +30,7 @@ module.exports.applyHmr = makeApplyHmr(args => {
     },
     reload() {
       if (Package && Package.reload) {
-        Package.reload._reload({ immediateMigration: true });
+        Package.reload.Reload._reload({ immediateMigration: true });
       } else {
         window.location.reload();
       }
