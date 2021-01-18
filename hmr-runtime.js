@@ -23,6 +23,13 @@ module.exports.applyHmr = makeApplyHmr(args => {
       accept(cb) {
         acceptCallback = cb;
       }
+    },
+    reload() {
+      if (Package && Package.reload) {
+        Package.reload._reload({ immediateMigration: true });
+      } else {
+        window.location.reload();
+      }
     }
   });
 });
