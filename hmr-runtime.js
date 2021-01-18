@@ -24,6 +24,10 @@ module.exports.applyHmr = makeApplyHmr(args => {
         acceptCallback = cb;
       }
     },
+    hotOptions: {
+      ...(args.hotOptions || {}),
+      noOverlay: true
+    },
     reload() {
       if (Package && Package.reload) {
         Package.reload._reload({ immediateMigration: true });
