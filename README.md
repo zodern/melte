@@ -5,7 +5,7 @@ Build [cybernetically enhanced web apps](https://svelte.dev) with Meteor and Sve
 Based on [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte/pull/30) with these added features:
 
 - Tracker statements
-- Support for hot module replacement (HMR) to update modified components without requiring a full page reload. Requires running [Meteor from checkout](https://github.com/meteor/meteor/pull/11117).
+- Support for hot module replacement (HMR) to update modified components without requiring a full page reload. Requires your app to use Meteor 2 and the [hot-module-replacement](https://docs.meteor.com/packages/hot-module-replacement.html) package.
 - Handles syntax errors without crashing
 
 Compatible with Meteor 1.8.2 and newer.
