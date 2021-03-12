@@ -14,7 +14,6 @@ Package.registerBuildPlugin({
     'babel-compiler@7.3.4',
     'caching-compiler@1.2.1',
     'ecmascript@0.12.7',
-    'typescript@4.1.2'
   ],
   sources: [
     'SvelteCompiler.js',
@@ -31,7 +30,6 @@ Package.registerBuildPlugin({
     'periscopic': '2.0.2',
     'svelte-hmr': hmrVersion,
     'acorn': '7.4.0',
-    'typescript': '4.1.2'
   }
 });
 
