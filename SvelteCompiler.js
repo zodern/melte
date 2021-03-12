@@ -3,19 +3,27 @@ import postcss from 'postcss';
 import sourcemap from 'source-map';
 import { parse, print, types } from 'recast';
 import acorn from 'recast/parsers/acorn';
+import typescript from 'recast/parsers/typescript';
 import { analyze, extract_names } from 'periscopic';
 
-const recastParser = {
-  parse(_, options) {
-    options.ecmaVersion = 2020;
-    return acorn.parse.apply(acorn, arguments);
-  }
+import { transformer as ts } from 'svelte-preprocess/dist/transformers/typescript';
+
+function createRecastParser(isTS = false) {
+  const parser = isTS ? typescript : acorn;
+
+  return {
+    parse(_, options) {
+      options.ecmaVersion = 2020;
+
+      return parser.parse.apply(acorn, arguments);
+    }
+  };
 }
 
 const b = types.builders;
 
-const TRACKER_WRAPPER_PREFIX = '_m_tracker'
-const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper'
+const TRACKER_WRAPPER_PREFIX = '_m_tracker';
+const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper';
 const { createMakeHot } = require('svelte-hmr');
 
 // PREPROCESS_VERSION can be used in development
@@ -174,6 +182,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
 
     let code = file.getContentsAsString();
+    let map;
     const basename = file.getBasename();
     const path = file.getPathInPackage();
     const arch = file.getArch();
@@ -202,124 +211,129 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
 
     let error;
-    code = (await this.svelte.preprocess(code, {
-      script({ content, attributes }) {
-        // Reactive statements are not supported in the module script
-        if (attributes.context === 'module') {
-          return;
-        }
-        let ast;
+    try {
+      ({ code, map } = (await this.svelte.preprocess(code, {
+        script({ content, attributes }) {
+          // Reactive statements are not supported in the module script
+          if (attributes.context === 'module') {
+            return;
+          }
+          let ast;
 
-        try {
-          ast = parse(content, {
-            parser: recastParser
-          });
-        } catch (e) {
-          error = e;
-          return content;
-        }
+          try {
+            ast = parse(content, { parser: createRecastParser(attributes.lang === 'ts') });
+          } catch (e) {
+            error = e;
+            return content;
+          }
 
-        let modified = false;
-        let uniqueIdCount = 0;
-        let injectedReactiveVars = [];
+          let modified = false;
+          let uniqueIdCount = 0;
+          let injectedReactiveVars = [];
 
-        let { globals } = analyze(ast.program.body);
+          let { globals } = analyze(ast.program.body);
 
-        // Only look for top-level labels
-        for (let i = 0; i < ast.program.body.length; i++) {
-          let node = ast.program.body[i];
+          // Only look for top-level labels
+          for (let i = 0; i < ast.program.body.length; i++) {
+            let node = ast.program.body[i];
 
-          if (node.type === 'LabeledStatement' && node.label.name === '$m') {
-            modified = true;
+            if (node.type === 'LabeledStatement' && node.label.name === '$m') {
+              modified = true;
 
-            // Check if we should add a variable declaration
-            // Svelte adds missing declarations for variables assigned to 
-            // in reactive assignment expressions, but due to how we wrap the
-            // reactive statement it is no longer detectable by Svelte
-            if (node.body.type === 'ExpressionStatement') {
-              let expression = node.body.expression;
-              if (
-                expression.type === 'AssignmentExpression' &&
-                expression.left.type !== 'MemberExpression'
-              ) {
-                extract_names(expression.left).forEach(name => {
-                  // Svelte's implementation does not inject declarations for variables
-                  // declared in the module scope. Variables in the module scope are never
-                  // reactive, but assigning to them in a reactive statement doesn't error.
-                  // Here we are not checking for that, which could cause runtime errors
-                  if (name[0] !== '$' && globals.has(name)) {
-                    injectedReactiveVars.push(name);
-                  }
-                });
+              // Check if we should add a variable declaration
+              // Svelte adds missing declarations for variables assigned to
+              // in reactive assignment expressions, but due to how we wrap the
+              // reactive statement it is no longer detectable by Svelte
+              if (node.body.type === 'ExpressionStatement') {
+                let expression = node.body.expression;
+                if (
+                    expression.type === 'AssignmentExpression' &&
+                    expression.left.type !== 'MemberExpression'
+                ) {
+                  extract_names(expression.left).forEach(name => {
+                    // Svelte's implementation does not inject declarations for variables
+                    // declared in the module scope. Variables in the module scope are never
+                    // reactive, but assigning to them in a reactive statement doesn't error.
+                    // Here we are not checking for that, which could cause runtime errors
+                    if (name[0] !== '$' && globals.has(name)) {
+                      injectedReactiveVars.push(name);
+                    }
+                  });
+                }
               }
-            }
 
-            ast.program.body[i] = b.labeledStatement(
-              b.identifier("$"),
-              b.expressionStatement(
-                b.callExpression(
-                  b.identifier(`${TRACKER_WRAPPER_PREFIX}${uniqueIdCount++}`),
-                  [
-                    b.arrowFunctionExpression(
-                      [],
-                      b.blockStatement([
-                        node.body
-                      ])
+              ast.program.body[i] = b.labeledStatement(
+                  b.identifier("$"),
+                  b.expressionStatement(
+                      b.callExpression(
+                          b.identifier(`${TRACKER_WRAPPER_PREFIX}${uniqueIdCount++}`),
+                          [
+                            b.arrowFunctionExpression(
+                                [],
+                                b.blockStatement([
+                                  node.body
+                                ])
+                            )
+                          ]
+                      )
+                  )
+              );
+            }
+          }
+
+          if (modified) {
+            for (let i = 0; i < injectedReactiveVars.length; i++) {
+              ast.program.body.unshift(
+                  b.variableDeclaration("let", [
+                    b.variableDeclarator(
+                        b.identifier(injectedReactiveVars[i])
                     )
-                  ]
-                )
-              )
-            );
-          }
-        }
+                  ])
+              );
+            }
 
-        if (modified) {
-          for (let i = 0; i < injectedReactiveVars.length; i++) {
+            for (let i = 0; i < uniqueIdCount; i++) {
+              ast.program.body.unshift(
+                  b.variableDeclaration("const", [
+                    b.variableDeclarator(
+                        b.identifier(`${TRACKER_WRAPPER_PREFIX}${i}`),
+                        b.callExpression(b.identifier(TRACKER_WRAPPER_CREATOR), [])
+                    )
+                  ]));
+            }
+
             ast.program.body.unshift(
-              b.variableDeclaration("let", [
-                b.variableDeclarator(
-                  b.identifier(injectedReactiveVars[i])
-                )
-              ])
-            );
+                b.importDeclaration(
+                    [
+                      b.importSpecifier(
+                          b.identifier('createReactiveWrapper'),
+                          b.identifier(TRACKER_WRAPPER_CREATOR)
+                      )
+                    ],
+                    b.literal(`meteor/${PACKAGE_NAME}/tracker`)
+                ));
           }
 
-          for (let i = 0; i < uniqueIdCount; i++) {
-            ast.program.body.unshift(
-              b.variableDeclaration("const", [
-                b.variableDeclarator(
-                  b.identifier(`${TRACKER_WRAPPER_PREFIX}${i}`),
-                  b.callExpression(b.identifier(TRACKER_WRAPPER_CREATOR), [])
-                )
-              ]));
-          }
+          const processedCode = modified ? print(ast).code : content;
 
-          ast.program.body.unshift(
-            b.importDeclaration(
-              [
-                b.importSpecifier(
-                  b.identifier('createReactiveWrapper'),
-                  b.identifier(TRACKER_WRAPPER_CREATOR)
-                )
-              ],
-              b.literal(`meteor/${PACKAGE_NAME}/tracker`)
-          ));
-        }
-
-        return {
-          code: modified ? print(ast).code : content
-        };
-      },
-      style: async ({ content, attributes }) => {
-        if (this.postcss) {
-          if (attributes.lang == 'postcss') {
-            return {
-              code: await this.postcss.process(content, { from: undefined })
+          return attributes.lang === 'ts'
+              ? ts({ content: processedCode, filename: path })
+              : { code: processedCode };
+        },
+        style: async ({ content, attributes }) => {
+          if (this.postcss) {
+            if (attributes.lang == 'postcss') {
+              return {
+                code: await this.postcss.process(content, { from: undefined })
+              };
             }
           }
         }
-      }
-    })).code;
+      })));
+    } catch (e) {
+      file.error(e);
+      return;
+    }
 
     if (error) {
       file.error(error);
@@ -329,6 +343,11 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     let compiledResult;
     try {
       compiledResult = this.svelte.compile(code, svelteOptions);
+
+      if (map) {
+        compiledResult.js.map = this.combineSourceMaps(map, compiledResult.js.map);
+      }
+
     } catch (e) {
       file.error(e);
       return;
@@ -415,19 +434,19 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
   // Generates a new source map that maps a file transpiled by Babel back to the
   // original HTML via a source map generated by the Svelte compiler.
-  combineSourceMaps(babelMap, svelteMap) {
+  combineSourceMaps(targetMap, originalMap) {
     const result = new sourcemap.SourceMapGenerator;
 
-    const babelConsumer = new sourcemap.SourceMapConsumer(babelMap);
-    const svelteConsumer = new sourcemap.SourceMapConsumer(svelteMap);
+    const targetConsumer = new sourcemap.SourceMapConsumer(targetMap);
+    const originalConsumer = new sourcemap.SourceMapConsumer(originalMap);
 
-    babelConsumer.eachMapping(mapping => {
+    targetConsumer.eachMapping(mapping => {
       // Ignore mappings that don't have a source.
       if (!mapping.source) {
         return;
       }
 
-      const position = svelteConsumer.originalPositionFor({
+      const position = originalConsumer.originalPositionFor({
         line: mapping.originalLine,
         column: mapping.originalColumn
       });
@@ -450,13 +469,12 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       });
     });
 
-    // Copy source content from the source map generated by the Svelte compiler.
-    // We can just take the first entry because only one file is involved in the
-    // Svelte compilation and Babel transpilation.
-    result.setSourceContent(
-      svelteMap.sources[0],
-      svelteMap.sourcesContent[0]
-    );
+    if (originalMap.sourcesContent && originalMap.sourcesContent.length) {
+      // Copy source content from the source map generated by the Svelte compiler.
+      // We can just take the first entry because only one file is involved in the
+      // Svelte compilation and Babel transpilation.
+      result.setSourceContent(originalMap.sources[0], originalMap.sourcesContent[0]);
+    }
 
     return result.toJSON();
   }
