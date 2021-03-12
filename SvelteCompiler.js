@@ -5,12 +5,14 @@ import { parse, print, types } from 'recast';
 import acorn from 'recast/parsers/acorn';
 import { analyze, extract_names } from 'periscopic';
 
+import { processCode } from './scss-processor';
+
 const recastParser = {
   parse(_, options) {
     options.ecmaVersion = 2020;
     return acorn.parse.apply(acorn, arguments);
   }
-}
+};
 
 const b = types.builders;
 
@@ -233,14 +235,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
             modified = true;
 
             // Check if we should add a variable declaration
-            // Svelte adds missing declarations for variables assigned to 
+            // Svelte adds missing declarations for variables assigned to
             // in reactive assignment expressions, but due to how we wrap the
             // reactive statement it is no longer detectable by Svelte
             if (node.body.type === 'ExpressionStatement') {
               let expression = node.body.expression;
               if (
-                expression.type === 'AssignmentExpression' &&
-                expression.left.type !== 'MemberExpression'
+                  expression.type === 'AssignmentExpression' &&
+                  expression.left.type !== 'MemberExpression'
               ) {
                 extract_names(expression.left).forEach(name => {
                   // Svelte's implementation does not inject declarations for variables
@@ -315,8 +317,29 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
           if (attributes.lang == 'postcss') {
             return {
               code: await this.postcss.process(content, { from: undefined })
-            }
+            };
           }
+        }
+
+        if (attributes.lang === 'scss') {
+          const shallEmit = 'global' in attributes;
+
+          const result = await processCode(file, path, { content, attributes });
+
+          if (!shallEmit) {
+            return result;
+          }
+
+          debugger
+
+          file.addStylesheet({
+            path: file.getBasename() + '.scss',
+            data: result.code,
+            sourceMap: result.map,
+            lazy: false,
+          });
+
+          return { code: '/** extracted into global style */' };
         }
       }
     })).code;
