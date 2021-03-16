@@ -1,5 +1,4 @@
 import { resolve } from 'path';
-import { transformer } from 'svelte-preprocess/dist/transformers/scss';
 
 const appdir = process.cwd();
 
@@ -9,6 +8,8 @@ const includePaths = [
 ];
 
 export async function processCode (file, filename, { content }) {
+    const transformer = require('svelte-preprocess/dist/transformers/scss');
+
     try {
         return await transformer({
             content,

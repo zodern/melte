@@ -30,6 +30,8 @@ Package.registerBuildPlugin({
     'periscopic': '2.0.2',
     'svelte-hmr': hmrVersion,
     'acorn': '7.4.0',
+    'typescript': '4.1.2',
+    'node-sass': '5.0.0',
   }
 });
 

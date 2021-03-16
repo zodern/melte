@@ -6,7 +6,6 @@ import acorn from 'recast/parsers/acorn';
 import typescript from 'recast/parsers/typescript';
 import { analyze, extract_names } from 'periscopic';
 
-import { transformer as ts } from 'svelte-preprocess/dist/transformers/typescript';
 import { processCode } from './scss-processor';
 
 function createRecastParser (isTS = false) {
@@ -55,6 +54,15 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         throw new Error(
           'Cannot find the `svelte` package in your application. ' +
           'Please install it with `meteor npm install `svelte`.'
+        );
+      }
+
+      try {
+        this.ts = require('svelte-preprocess/dist/transformers/typescript');
+      } catch (error) {
+        throw new Error(
+          'Cannot find the `svelte-preprocess` package in your application. ' +
+          'Please install it with `meteor npm install `svelte-preprocess`.'
         );
       }
 
