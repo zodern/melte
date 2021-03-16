@@ -3,21 +3,28 @@ import postcss from 'postcss';
 import sourcemap from 'source-map';
 import { parse, print, types } from 'recast';
 import acorn from 'recast/parsers/acorn';
+import typescript from 'recast/parsers/typescript';
 import { analyze, extract_names } from 'periscopic';
 
+import { transformer as ts } from 'svelte-preprocess/dist/transformers/typescript';
 import { processCode } from './scss-processor';
 
-const recastParser = {
-  parse(_, options) {
-    options.ecmaVersion = 2020;
-    return acorn.parse.apply(acorn, arguments);
-  }
-};
+function createRecastParser (isTS = false) {
+  const parser = isTS ? typescript : acorn;
+
+  return {
+    parse (_, options) {
+      options.ecmaVersion = 2020;
+
+      return parser.parse.apply(acorn, arguments);
+    }
+  };
+}
 
 const b = types.builders;
 
-const TRACKER_WRAPPER_PREFIX = '_m_tracker'
-const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper'
+const TRACKER_WRAPPER_PREFIX = '_m_tracker';
+const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper';
 const { createMakeHot } = require('svelte-hmr');
 
 // PREPROCESS_VERSION can be used in development
@@ -28,13 +35,8 @@ const PREPROCESS_VERSION = 7;
 
 const PACKAGE_NAME = 'zodern:melte';
 
-SvelteCompiler = class SvelteCompiler extends CachingCompiler {
-  constructor(options = {}) {
-    super({
-      compilerName: 'svelte',
-      defaultCacheSize: 1024 * 1024 * 10
-    });
-
+SvelteCompiler = class SvelteCompiler {
+  constructor (options = {}) {
     this.options = options;
     this.babelCompiler = new BabelCompiler;
 
@@ -50,15 +52,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       }
 
       this.makeHot = createMakeHot({
-          meta: 'module',
-          walk: this.svelte.walk,
-          absoluteImports: false,
-          hotApi: `meteor/${PACKAGE_NAME}/hmr-runtime.js`,
-          preserveLocalState: false,
-          adapter: `meteor/${PACKAGE_NAME}/proxy-adapter.js`,
+        meta: 'module',
+        walk: this.svelte.walk,
+        absoluteImports: false,
+        hotApi: `meteor/${PACKAGE_NAME}/hmr-runtime.js`,
+        preserveLocalState: false,
+        adapter: `meteor/${PACKAGE_NAME}/proxy-adapter.js`,
       });
     }
-
 
     if (options.postcss) {
       this.postcss = postcss(options.postcss.map(plugin => {
@@ -72,11 +73,13 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
-  hmrAvailable(file) {
+  hmrAvailable (file) {
     return typeof file.hmrAvailable === 'function' && file.hmrAvailable();
   }
 
-  getCacheKey(file) {
+  getCacheKey (file) {
+    console.log(file.__proto__);
+
     return [
       this.options,
       file.getPathInPackage(),
@@ -91,14 +94,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     ];
   }
 
-  setDiskCacheDirectory(cacheDirectory) {
+  setDiskCacheDirectory (cacheDirectory) {
     this._diskCache = cacheDirectory;
   }
 
-  _setBabelCacheDirectory(suffix) {
+  _setBabelCacheDirectory (suffix) {
     // Babel doesn't use the svelte or preprocessor versions in its cache keys
     // so we instead use the versions in the cache path
-    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}-${suffix || ''}`
+    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}-${suffix || ''}`;
     this.babelCompiler.setDiskCacheDirectory(this._diskCache + babelSuffix);
   }
 
@@ -106,7 +109,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   // object. If the processed HTML file is not a Svelte component, the result is
   // an array of HTML sections (head and/or body). Otherwise, it's an object
   // with JavaScript from a compiled Svelte component.
-  compileResultSize(result) {
+  compileResultSize (result) {
     let size = 0;
 
     if (Array.isArray(result)) {
@@ -118,7 +121,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     return size;
   }
 
-  getHtmlSections(file) {
+  getHtmlSections (file) {
     const path = file.getPathInPackage();
     const extension = path.substring(path.lastIndexOf('.') + 1);
 
@@ -146,7 +149,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
-  compileOneFileLater(file, getResult) {
+  compileOneFileLater (file, getResult) {
     // Search for top-level head and body tags. If at least one of these tags
     // exists, the file is not processed with the Svelte compiler. Instead, the
     // inner HTML of the tags is added to the respective section in the HTML
@@ -164,7 +167,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
-  async compileOneFile(file) {
+  async compileOneFile (file) {
     // Search for head and body tags if lazy compilation isn't supported.
     // Otherwise, the file has already been parsed in `compileOneFileLater`.
     if (!file.supportsLazyCompilation) {
@@ -176,6 +179,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
 
     let code = file.getContentsAsString();
+    let map;
     const basename = file.getBasename();
     const path = file.getPathInPackage();
     const arch = file.getArch();
@@ -204,145 +208,157 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
 
     let error;
-    code = (await this.svelte.preprocess(code, {
-      script({ content, attributes }) {
-        // Reactive statements are not supported in the module script
-        if (attributes.context === 'module') {
-          return;
-        }
-        let ast;
+    try {
+      ({ code, map } = (await this.svelte.preprocess(code, {
+        script ({ content, attributes }) {
+          // Reactive statements are not supported in the module script
+          if (attributes.context === 'module') {
+            return;
+          }
+          let ast;
 
-        try {
-          ast = parse(content, {
-            parser: recastParser
-          });
-        } catch (e) {
-          error = e;
-          return content;
-        }
+          try {
+            ast = parse(content, { parser: createRecastParser(attributes.lang === 'ts') });
+          } catch (e) {
+            error = e;
+            console.lof(e.stack)
+            return content;
+          }
 
-        let modified = false;
-        let uniqueIdCount = 0;
-        let injectedReactiveVars = [];
+          let modified = false;
+          let uniqueIdCount = 0;
+          let injectedReactiveVars = [];
 
-        let { globals } = analyze(ast.program.body);
+          let { globals } = analyze(ast.program.body);
 
-        // Only look for top-level labels
-        for (let i = 0; i < ast.program.body.length; i++) {
-          let node = ast.program.body[i];
+          // Only look for top-level labels
+          for (let i = 0; i < ast.program.body.length; i++) {
+            let node = ast.program.body[i];
 
-          if (node.type === 'LabeledStatement' && node.label.name === '$m') {
-            modified = true;
+            if (node.type === 'LabeledStatement' && node.label.name === '$m') {
+              modified = true;
 
-            // Check if we should add a variable declaration
-            // Svelte adds missing declarations for variables assigned to
-            // in reactive assignment expressions, but due to how we wrap the
-            // reactive statement it is no longer detectable by Svelte
-            if (node.body.type === 'ExpressionStatement') {
-              let expression = node.body.expression;
-              if (
+              // Check if we should add a variable declaration
+              // Svelte adds missing declarations for variables assigned to
+              // in reactive assignment expressions, but due to how we wrap the
+              // reactive statement it is no longer detectable by Svelte
+              if (node.body.type === 'ExpressionStatement') {
+                let expression = node.body.expression;
+                if (
                   expression.type === 'AssignmentExpression' &&
                   expression.left.type !== 'MemberExpression'
-              ) {
-                extract_names(expression.left).forEach(name => {
-                  // Svelte's implementation does not inject declarations for variables
-                  // declared in the module scope. Variables in the module scope are never
-                  // reactive, but assigning to them in a reactive statement doesn't error.
-                  // Here we are not checking for that, which could cause runtime errors
-                  if (name[0] !== '$' && globals.has(name)) {
-                    injectedReactiveVars.push(name);
-                  }
-                });
+                ) {
+                  extract_names(expression.left).forEach(name => {
+                    // Svelte's implementation does not inject declarations for variables
+                    // declared in the module scope. Variables in the module scope are never
+                    // reactive, but assigning to them in a reactive statement doesn't error.
+                    // Here we are not checking for that, which could cause runtime errors
+                    if (name[0] !== '$' && globals.has(name)) {
+                      injectedReactiveVars.push(name);
+                    }
+                  });
+                }
               }
+
+              ast.program.body[i] = b.labeledStatement(
+                b.identifier('$'),
+                b.expressionStatement(
+                  b.callExpression(
+                    b.identifier(`${TRACKER_WRAPPER_PREFIX}${uniqueIdCount++}`),
+                    [
+                      b.arrowFunctionExpression(
+                        [],
+                        b.blockStatement([
+                          node.body
+                        ])
+                      )
+                    ]
+                  )
+                )
+              );
+            }
+          }
+
+          if (modified) {
+            for (let i = 0; i < injectedReactiveVars.length; i++) {
+              ast.program.body.unshift(
+                b.variableDeclaration('let', [
+                  b.variableDeclarator(
+                    b.identifier(injectedReactiveVars[i])
+                  )
+                ])
+              );
             }
 
-            ast.program.body[i] = b.labeledStatement(
-              b.identifier("$"),
-              b.expressionStatement(
-                b.callExpression(
-                  b.identifier(`${TRACKER_WRAPPER_PREFIX}${uniqueIdCount++}`),
-                  [
-                    b.arrowFunctionExpression(
-                      [],
-                      b.blockStatement([
-                        node.body
-                      ])
-                    )
-                  ]
-                )
-              )
-            );
-          }
-        }
+            for (let i = 0; i < uniqueIdCount; i++) {
+              ast.program.body.unshift(
+                b.variableDeclaration('const', [
+                  b.variableDeclarator(
+                    b.identifier(`${TRACKER_WRAPPER_PREFIX}${i}`),
+                    b.callExpression(b.identifier(TRACKER_WRAPPER_CREATOR), [])
+                  )
+                ]));
+            }
 
-        if (modified) {
-          for (let i = 0; i < injectedReactiveVars.length; i++) {
             ast.program.body.unshift(
-              b.variableDeclaration("let", [
-                b.variableDeclarator(
-                  b.identifier(injectedReactiveVars[i])
-                )
-              ])
-            );
+              b.importDeclaration(
+                [
+                  b.importSpecifier(
+                    b.identifier('createReactiveWrapper'),
+                    b.identifier(TRACKER_WRAPPER_CREATOR)
+                  )
+                ],
+                b.literal(`meteor/${PACKAGE_NAME}/tracker`)
+              ));
           }
 
-          for (let i = 0; i < uniqueIdCount; i++) {
-            ast.program.body.unshift(
-              b.variableDeclaration("const", [
-                b.variableDeclarator(
-                  b.identifier(`${TRACKER_WRAPPER_PREFIX}${i}`),
-                  b.callExpression(b.identifier(TRACKER_WRAPPER_CREATOR), [])
-                )
-              ]));
-          }
-
-          ast.program.body.unshift(
-            b.importDeclaration(
-              [
-                b.importSpecifier(
-                  b.identifier('createReactiveWrapper'),
-                  b.identifier(TRACKER_WRAPPER_CREATOR)
-                )
-              ],
-              b.literal(`meteor/${PACKAGE_NAME}/tracker`)
-          ));
-        }
-
-        return {
-          code: modified ? print(ast).code : content
-        };
-      },
-      style: async ({ content, attributes }) => {
-        if (this.postcss) {
-          if (attributes.lang == 'postcss') {
-            return {
-              code: await this.postcss.process(content, { from: undefined })
-            };
-          }
-        }
-
-        if (attributes.lang === 'scss') {
-          const shallEmit = 'global' in attributes;
-
-          const result = await processCode(file, path, { content, attributes });
-
-          if (!shallEmit) {
-            return result;
-          }
+          const processedCode = modified ? print(ast).code : content;
 
           debugger
 
-          file.addStylesheet({
-            path: file.getBasename() + '.scss',
-            data: result.code,
-            sourceMap: result.map,
-            lazy: false,
-          });
+          return attributes.lang === 'ts'
+            ? ts({ content: processedCode, filename: path })
+            : { code: processedCode };
+        },
+        style: async ({ content, attributes }) => {
+          if (this.postcss) {
+            if (attributes.lang == 'postcss') {
+              return {
+                code: await this.postcss.process(content, { from: undefined })
+              };
+            }
+          }
 
-          return { code: '/** extracted into global style */' };
+          if (attributes.lang === 'scss') {
+            const shallEmit = 'global' in attributes;
+            const result = await processCode(file, path, { content, attributes });
+
+            result?.dependencies?.forEach((dependencyPath) => {
+              file.readAndWatchFile(dependencyPath);
+            });
+
+            if (!shallEmit) {
+              return result;
+            }
+
+            debugger
+
+            file.addStylesheet({
+              path: file.getBasename() + '.scss',
+              data: result.code,
+              sourceMap: result.map,
+              lazy: false,
+            });
+
+            return { code: '/** extracted into global style */' };
+          }
         }
-      }
-    })).code;
+      })));
+    } catch (e) {
+      file.error(e);
+      console.log(e.stack);
+      return;
+    }
 
     if (error) {
       file.error(error);
@@ -352,6 +368,11 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     let compiledResult;
     try {
       compiledResult = this.svelte.compile(code, svelteOptions);
+
+      if (map) {
+        compiledResult.js.map = this.combineSourceMaps(map, compiledResult.js.map);
+      }
+
     } catch (e) {
       file.error(e);
       return;
@@ -409,7 +430,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
-  addCompileResult(file, result) {
+  addCompileResult (file, result) {
     if (Array.isArray(result)) {
       result.forEach(section => file.addHtml(section));
     } else {
@@ -417,7 +438,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     }
   }
 
-  transpileWithBabel(source, path, file) {
+  transpileWithBabel (source, path, file) {
     // We need a different folder when HMR is enabled
     // to prevent babel from using those cache entries
     // in production builds
@@ -438,19 +459,19 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
   // Generates a new source map that maps a file transpiled by Babel back to the
   // original HTML via a source map generated by the Svelte compiler.
-  combineSourceMaps(babelMap, svelteMap) {
+  combineSourceMaps (targetMap, originalMap) {
     const result = new sourcemap.SourceMapGenerator;
 
-    const babelConsumer = new sourcemap.SourceMapConsumer(babelMap);
-    const svelteConsumer = new sourcemap.SourceMapConsumer(svelteMap);
+    const targetConsumer = new sourcemap.SourceMapConsumer(targetMap);
+    const originalConsumer = new sourcemap.SourceMapConsumer(originalMap);
 
-    babelConsumer.eachMapping(mapping => {
+    targetConsumer.eachMapping(mapping => {
       // Ignore mappings that don't have a source.
       if (!mapping.source) {
         return;
       }
 
-      const position = svelteConsumer.originalPositionFor({
+      const position = originalConsumer.originalPositionFor({
         line: mapping.originalLine,
         column: mapping.originalColumn
       });
@@ -473,13 +494,12 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       });
     });
 
-    // Copy source content from the source map generated by the Svelte compiler.
-    // We can just take the first entry because only one file is involved in the
-    // Svelte compilation and Babel transpilation.
-    result.setSourceContent(
-      svelteMap.sources[0],
-      svelteMap.sourcesContent[0]
-    );
+    if (originalMap.sourcesContent && originalMap.sourcesContent.length) {
+      // Copy source content from the source map generated by the Svelte compiler.
+      // We can just take the first entry because only one file is involved in the
+      // Svelte compilation and Babel transpilation.
+      result.setSourceContent(originalMap.sources[0], originalMap.sourcesContent[0]);
+    }
 
     return result.toJSON();
   }

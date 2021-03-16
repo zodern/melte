@@ -1,6 +1,6 @@
 Package.describe({
   name: 'zodern:melte',
-  version: '1.4.0',
+  version: '1.4.2',
   summary: 'Svelte compiler with tracker integration and HMR',
   git: 'https://github.com/zodern/melte.git',
   documentation: 'README.md'
@@ -21,6 +21,7 @@ Package.registerBuildPlugin({
   ],
   npmDependencies: {
     '@babel/runtime': '7.4.3',
+    '@babel/parser': '7.4.3',
     'find-up': '3.0.0',
     htmlparser2: '3.10.1',
     'postcss': '7.0.17',
@@ -28,7 +29,7 @@ Package.registerBuildPlugin({
     'recast': '0.19.0',
     'periscopic': '2.0.2',
     'svelte-hmr': hmrVersion,
-    'acorn': '7.4.0'
+    'acorn': '7.4.0',
   }
 });
 
@@ -41,7 +42,6 @@ Package.onUse(function (api) {
   api.use('isobuild:compiler-plugin@1.0.0');
   api.use('modules', 'client');
   api.use('tracker', 'client');
-  api.use('fourseven:scss');
 
   api.addFiles('tracker.js', 'client');
 

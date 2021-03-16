@@ -95,6 +95,15 @@ If you want to reuse (hydrate) server-rendered HTML, set the `hydratable` option
 Svelte can [extract styles for server-side rendering](https://svelte.dev/docs#Server-side_component_API).
 If you want to render CSS on the server, you might want to set the `css` option to `false` so that client-rendered components don't insert CSS into the DOM.
 
+## Preprocessing
+
+Currently only Typescript preprocessing is supported for script blocks with `lang="ts"` attribute set. 
+In order to get preprocessing working, additional NPM-packages need to be installed:
+```
+$ meteor npm i --save-dev svelte-preprocess typescript
+```
+It is highly recommended to use TS version, supported by the Meteor release you are using. 
+
 ## Server-Side Rendering
 
 `meteor-svelte` supports server-side rendering with minimal configuration.
