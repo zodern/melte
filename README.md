@@ -14,7 +14,7 @@ Compatible with Meteor 1.8.2 and newer.
 
 To use `meteor-svelte`, run the following commands:
 
-```
+```shell
 $ meteor add zodern:melte
 $ meteor npm install svelte
 ```
@@ -68,7 +68,7 @@ Sort by:
 
 Compiler options can be specified with a `"svelte:compiler"` property in `package.json`. For example:
 
-```
+```json
 {
   ...
   "svelte:compiler": {
@@ -97,12 +97,49 @@ If you want to render CSS on the server, you might want to set the `css` option 
 
 ## Preprocessing
 
-Currently only Typescript preprocessing is supported for script blocks with `lang="ts"` attribute set. 
+### Scripts
+
+Currently, only Typescript preprocessing is supported for script blocks with `lang="ts"` attribute set. 
 In order to get preprocessing working, additional NPM-packages need to be installed:
-```
+```shell
 $ meteor npm i --save-dev svelte-preprocess typescript
 ```
-It is highly recommended to use TS version, supported by the Meteor release you are using. 
+It is highly recommended to use TS version, supported by the Meteor release you are using.
+
+### Styles
+
+SCSS preprocessing is available for style blocks and is enabled for components by adding `lang="scss"` 
+attribute. Just as with scripts, an installation of the toolkit is required to use SCSS reprocessing:
+```shell
+$ meteor npm i --save-dev svelte-preprocess node-sass
+```
+It is highly recommended to use node-sass (libsass) version of the SCSS compiler, however, Dart version should 
+also work well.
+
+#### Style limitations:
+
+* In accordance with svlete-preprocess documentation, global styles are also supported, but **ONLY** by adding the 
+`global` attribute and **NOT** by the `:global` rule.
+  
+* SCSS transformer does not use Meteor resolver which makes it impossible to imports styles from Atmosphere packages.
+
+* For the same reason, all imports paths must be specified relatively to application root, e.g.:
+```scss
+@import 'client/style/theme.scss';
+```
+or
+```scss
+@import 'imports/style/variables.scss';
+```
+
+* To import files from node_modules, the import path must be prefixed with a tilde (`~`), e.g.: 
+```scss
+@import '~/my-awesome-library/lib/scss/library.scss';
+```
+or
+```scss
+@import '~/material-design-icons/iconfont/material-icons.css';
+```
 
 ## Server-Side Rendering
 

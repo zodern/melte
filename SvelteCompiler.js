@@ -25,18 +25,25 @@ const b = types.builders;
 
 const TRACKER_WRAPPER_PREFIX = '_m_tracker';
 const TRACKER_WRAPPER_CREATOR = '_m_createReactiveWrapper';
+const SCSS_STYLE_REGEX = /<style[^>]+lang=['"]scss['"]/;
+
 const { createMakeHot } = require('svelte-hmr');
 
 // PREPROCESS_VERSION can be used in development
 // to invalidate caches
 // In a published package, the cache is reset
 // whenever the app updates to a new version.
-const PREPROCESS_VERSION = 7;
+const PREPROCESS_VERSION = 8;
 
 const PACKAGE_NAME = 'zodern:melte';
 
-SvelteCompiler = class SvelteCompiler {
-  constructor (options = {}) {
+SvelteCompiler = class SvelteCompiler extends CachingCompiler {
+  constructor(options = {}) {
+    super({
+      compilerName: 'svelte',
+      defaultCacheSize: 1024 * 1024 * 10
+    });
+
     this.options = options;
     this.babelCompiler = new BabelCompiler;
 
@@ -78,7 +85,12 @@ SvelteCompiler = class SvelteCompiler {
   }
 
   getCacheKey (file) {
-    console.log(file.__proto__);
+    if (SCSS_STYLE_REGEX.test(file.getContentsAsString())) {
+      // We intentionally omit caching now for components with SCSS styles,
+      // otherwise it will demand a really complicated way of tracking
+      // imported files as dependencies.
+      return Date.now() + Math.random();
+    }
 
     return [
       this.options,
@@ -90,7 +102,7 @@ SvelteCompiler = class SvelteCompiler {
       {
         svelteVersion: this.svelte.VERSION,
         preprocessVersion: PREPROCESS_VERSION
-      }
+      },
     ];
   }
 
@@ -314,8 +326,6 @@ SvelteCompiler = class SvelteCompiler {
 
           const processedCode = modified ? print(ast).code : content;
 
-          debugger
-
           return attributes.lang === 'ts'
             ? ts({ content: processedCode, filename: path })
             : { code: processedCode };
@@ -341,8 +351,6 @@ SvelteCompiler = class SvelteCompiler {
               return result;
             }
 
-            debugger
-
             file.addStylesheet({
               path: file.getBasename() + '.scss',
               data: result.code,
@@ -356,7 +364,6 @@ SvelteCompiler = class SvelteCompiler {
       })));
     } catch (e) {
       file.error(e);
-      console.log(e.stack);
       return;
     }
 

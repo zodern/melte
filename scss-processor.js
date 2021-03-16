@@ -1,14 +1,14 @@
 import { resolve } from 'path';
 import { transformer } from 'svelte-preprocess/dist/transformers/scss';
 
-export async function processCode (file, filename, { content, attributes }) {
-    const appdir = process.env.PWD || process.cwd();
+const appdir = process.cwd();
 
-    const includePaths = [
-        resolve(appdir),
-        resolve(appdir, 'node_modules'),
-    ];
+const includePaths = [
+    resolve(appdir),
+    resolve(appdir, 'node_modules'),
+];
 
+export async function processCode (file, filename, { content }) {
     try {
         return await transformer({
             content,
