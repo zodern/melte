@@ -82,6 +82,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       file.getArch(),
       file.getPackageName(),
       this.hmrAvailable(file),
+      process.env.NODE_ENV === 'production',
       {
         svelteVersion: this.svelte.VERSION,
         preprocessVersion: PREPROCESS_VERSION
@@ -96,7 +97,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   _setBabelCacheDirectory(suffix) {
     // Babel doesn't use the svelte or preprocessor versions in its cache keys
     // so we instead use the versions in the cache path
-    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}-${suffix || ''}`
+    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}-${process.env.NODE_ENV === 'production'}-${suffix || ''}`
     this.babelCompiler.setDiskCacheDirectory(this._diskCache + babelSuffix);
   }
 
