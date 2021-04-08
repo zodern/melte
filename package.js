@@ -1,7 +1,7 @@
 Package.describe({
   name: 'zodern:melte',
-  version: '1.3.1',
-  summary: 'Svelte compiler with tracker integration and HMR',
+  version: '1.4.0',
+  summary: 'Svelte compiler with tracker integration, HMR and Typescript support',
   git: 'https://github.com/zodern/melte.git',
   documentation: 'README.md'
 });
@@ -13,7 +13,7 @@ Package.registerBuildPlugin({
   use: [
     'babel-compiler@7.3.4',
     'caching-compiler@1.2.1',
-    'ecmascript@0.12.7'
+    'ecmascript@0.12.7',
   ],
   sources: [
     'SvelteCompiler.js',
@@ -21,6 +21,7 @@ Package.registerBuildPlugin({
   ],
   npmDependencies: {
     '@babel/runtime': '7.4.3',
+    '@babel/parser': '7.4.3',
     'find-up': '3.0.0',
     htmlparser2: '3.10.1',
     'postcss': '7.0.17',
@@ -28,7 +29,7 @@ Package.registerBuildPlugin({
     'recast': '0.19.0',
     'periscopic': '2.0.2',
     'svelte-hmr': hmrVersion,
-    'acorn': '7.4.0'
+    'acorn': '7.4.0',
   }
 });
 

@@ -7,6 +7,7 @@ Based on [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte/pull/30)
 - Tracker statements
 - Support for hot module replacement (HMR) to update modified components without requiring a full page reload. Requires your app to use Meteor 2 and the [hot-module-replacement](https://docs.meteor.com/packages/hot-module-replacement.html) package.
 - Handles syntax errors without crashing
+- Supports Typescript preprocessing for script blocks
 
 Compatible with Meteor 1.8.2 and newer.
 
@@ -68,7 +69,7 @@ Sort by:
 
 Compiler options can be specified with a `"svelte:compiler"` property in `package.json`. For example:
 
-```
+```json
 {
   ...
   "svelte:compiler": {
@@ -94,6 +95,17 @@ If you want to reuse (hydrate) server-rendered HTML, set the `hydratable` option
 
 Svelte can [extract styles for server-side rendering](https://svelte.dev/docs#Server-side_component_API).
 If you want to render CSS on the server, you might want to set the `css` option to `false` so that client-rendered components don't insert CSS into the DOM.
+
+## Preprocessing
+
+### Scripts
+
+Currently, only Typescript preprocessing is supported for script blocks with `lang="ts"` attribute set. 
+In order to get preprocessing working, additional NPM-packages need to be installed:
+```shell
+$ meteor npm i --save-dev svelte-preprocess typescript
+```
+It is highly recommended to use TS version, supported by the Meteor release you are using.
 
 ## Server-Side Rendering
 
