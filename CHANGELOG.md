@@ -1,3 +1,7 @@
+## 1.4.1 - April 17, 2021
+
+- Fix errors with the legacy web client
+
 ## 1.4.0 - April 17, 2021
 
 - Use typescript with svelte (@r00t3g)
