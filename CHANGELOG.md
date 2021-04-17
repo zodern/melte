@@ -2,7 +2,7 @@
 
 - Use typescript with svelte (@r00t3g)
 - Fix using HMR with SSR
-- Various other improvements and fixes for HMR from updating svelte-hmr
+- Various other improvements and fixes for HMR
 - Fix sometimes causing the meteor tool to crash when there is a syntax error in a svelte file
 
 ## 1.3.1 - March 25, 2021
