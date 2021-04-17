@@ -54,6 +54,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         );
       }
 
+      this.ts = null;
+
       try {
         let tsPackage = require('typescript/package.json');
         this.tsVersion = tsPackage.version;
@@ -81,6 +83,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         }
       }));
     }
+  }
+
+  getTs() {
+    if (this.ts === null) {
+      this.ts = require('svelte-preprocess/dist/transformers/typescript').transformer;
+    }
+
+    return this.ts;
   }
 
   hmrAvailable(file) {
