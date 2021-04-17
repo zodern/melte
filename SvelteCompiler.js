@@ -235,7 +235,6 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       }
     }
 
-    let error;
     try {
       ({ code, map } = (await this.svelte.preprocess(code, {
         script: ({ content, attributes }) => {
@@ -243,14 +242,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
           if (attributes.context === 'module') {
             return;
           }
-          let ast;
 
-          try {
-            ast = parse(content, { parser: createRecastParser(attributes.lang === 'ts') });
-          } catch (e) {
-            error = e;
-            return content;
-          }
+          let ast = parse(content, { parser: createRecastParser(attributes.lang === 'ts') });
 
           let modified = false;
           let uniqueIdCount = 0;
@@ -356,12 +349,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         }
       })));
     } catch (e) {
-      file.error(e);
-      return;
+      let err = { message: e.message };
+
+      if (e.loc) {
+        err.line = e.loc.line;
+        err.column = e.loc.column;
     }
 
-    if (error) {
-      file.error(error);
+      file.error(err);
       return;
     }
 
