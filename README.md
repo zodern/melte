@@ -20,6 +20,24 @@ meteor add zodern:melte
 meteor npm install svelte
 ```
 
+The `svelte` npm package uses newer JS syntax. To fix any errors with the cordova or legacy client, update your package.json file to tell Meteor to recompile it:
+
+```js
+{
+  ...
+
+  "meteor": {
+    ...
+
+    "nodeModules": {
+      "recompile": {
+        "svelte": ["legacy"]
+      }
+    }
+  }
+}
+```
+
 ### Tracker Statements
 
 In addition to the [$ reactive statements](https://svelte.dev/docs#3_$_marks_a_statement_as_reactive) Svelte normally supports, this adds `$m` tracker statements. They behave the same as normal reactive statements, but also rerun whenever any Tracker dependencies they use are invalidated. Behind the scenes, it uses [`Tracker.autorun`](https://docs.meteor.com/api/tracker.html#Tracker-autorun).
