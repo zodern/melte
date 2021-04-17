@@ -67,6 +67,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         meta: 'module',
         walk: this.svelte.walk,
         absoluteImports: false,
+        versionNonAbsoluteImports: false,
         hotApi: `meteor/${PACKAGE_NAME}/hmr-runtime.js`,
         preserveLocalState: false,
         adapter: `meteor/${PACKAGE_NAME}/proxy-adapter.js`,
@@ -386,11 +387,10 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         svelteOptions
       );
 
-      // makeHot is hard coded to use `import.meta` in some places
-      // even when using the `meta` option.
+      // makeHot injects a reference to `import.meta`, which Meteor does not support
       compiledResult.js.code = compiledResult.js.code.replace(
-        'import.meta && import.meta.hot',
-        'module && module.hot'
+        'if (false) import.meta.hot.accept();',
+        ''
       );
     }
 
