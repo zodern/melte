@@ -41,7 +41,7 @@ Npm.depends({
 Package.onUse(function (api) {
   api.versionsFrom('1.8.1');
   api.use('isobuild:compiler-plugin@1.0.0');
-  api.use('modules', 'client');
+  api.use('ecmascript@0.12.7', 'client');
   api.use('tracker', 'client');
 
   api.addFiles('tracker.js', 'client');
