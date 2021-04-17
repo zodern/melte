@@ -15,9 +15,9 @@ Compatible with Meteor 1.8.2 and newer.
 
 To use `meteor-svelte`, run the following commands:
 
-```
-$ meteor add zodern:melte
-$ meteor npm install svelte
+```bash
+meteor add zodern:melte
+meteor npm install svelte
 ```
 
 ### Tracker Statements
@@ -65,6 +65,32 @@ Sort by:
 <p>{completedCount} completed</p>
 ```
 
+## Typescript
+
+To use typescript with svelte files:
+
+1) Add the typescript npm package to your app with `meteor npm i --save-dev typescript`
+2) Add a `tsconfig.json` file. An example file can be found in the [Meteor docs](https://guide.meteor.com/build-tool.html#typescript)
+3) In your svelte files, set the `lang="ts"` attribute for scripts:
+
+```html
+<script lang="ts">
+  let count = 0;
+
+  let doubled: number;
+  $: doubled = count * 2;
+</script>
+
+<button on:click="{() => count += 1}">Click me</button>
+<p>You've clicked the button {count} times (doubled: {doubled}).</p>
+```
+
+Melte does not check the types when compiling Svelte files. To check types, you can use [`svelte-check`](https://www.npmjs.com/package/svelte-check) or [`eslint-plugin-svelte3`](https://github.com/sveltejs/eslint-plugin-svelte3).
+
+Learn more about using Typescript and Svelte from [Svelte's docs](https://github.com/sveltejs/language-tools/blob/master/docs/preprocessors/typescript.md).
+
+If you encounter the error `The "path" argument must be of type string. Received undefined`, this is usually from Typescript not being able to find the `tsconfig.json` file.
+
 ## Options
 
 Compiler options can be specified with a `"svelte:compiler"` property in `package.json`. For example:
@@ -95,17 +121,6 @@ If you want to reuse (hydrate) server-rendered HTML, set the `hydratable` option
 
 Svelte can [extract styles for server-side rendering](https://svelte.dev/docs#Server-side_component_API).
 If you want to render CSS on the server, you might want to set the `css` option to `false` so that client-rendered components don't insert CSS into the DOM.
-
-## Preprocessing
-
-### Scripts
-
-Currently, only Typescript preprocessing is supported for script blocks with `lang="ts"` attribute set. 
-In order to get preprocessing working, additional NPM-packages need to be installed:
-```shell
-$ meteor npm i --save-dev svelte-preprocess typescript
-```
-It is highly recommended to use TS version, supported by the Meteor release you are using.
 
 ## Server-Side Rendering
 

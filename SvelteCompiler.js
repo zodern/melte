@@ -55,12 +55,10 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       }
 
       try {
-        this.ts = require('svelte-preprocess/dist/transformers/typescript').transformer;
-      } catch (error) {
-        throw new Error(
-          'Cannot find the `svelte-preprocess` package in your application. ' +
-          'Please install it with `meteor npm install `svelte-preprocess`.'
-        );
+        let tsPackage = require('typescript/package.json');
+        this.tsVersion = tsPackage.version;
+      } catch (e) {
+        this.tsVersion = '<unknown>';
       }
 
       this.makeHot = createMakeHot({
@@ -100,7 +98,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       process.env.NODE_ENV === 'production',
       {
         svelteVersion: this.svelte.VERSION,
-        preprocessVersion: PREPROCESS_VERSION
+        preprocessVersion: PREPROCESS_VERSION,
+        tsVersion: this.tsVersion,
       },
     ];
   }
@@ -112,8 +111,14 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
   _setBabelCacheDirectory(suffix) {
     // Babel doesn't use the svelte or preprocessor versions in its cache keys
     // so we instead use the versions in the cache path
-    const babelSuffix = `-babel-${(this.svelte || {}).VERSION}-${PREPROCESS_VERSION}-${process.env.NODE_ENV
-    === 'production'}-${suffix || ''}`;
+    const babelSuffix = [
+      (this.svelte || {}).VERSION,
+      PREPROCESS_VERSION,
+      process.env.NODE_ENV === 'production',
+      this.tsVersion,
+      suffix
+    ].join('-');
+
     this.babelCompiler.setDiskCacheDirectory(this._diskCache + babelSuffix);
   }
 
@@ -326,7 +331,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
           const processedCode = modified ? print(ast).code : content;
 
           return attributes.lang === 'ts'
-            ? this.ts({ content: processedCode, filename: path })
+            ? this.getTs()({ content: processedCode, filename: path })
             : { code: processedCode };
         },
         style: async ({ content, attributes }) => {

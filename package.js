@@ -30,6 +30,7 @@ Package.registerBuildPlugin({
     'periscopic': '2.0.2',
     'svelte-hmr': hmrVersion,
     'acorn': '7.4.0',
+    'svelte-preprocess': '4.7.0'
   }
 });
 
