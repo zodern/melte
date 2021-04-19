@@ -1,4 +1,4 @@
-const { makeApplyHmr } = require('svelte-hmr/runtime');
+const { makeApplyHmr } = require('meteor/zodern:melte-compiler/hmr-runtime.js');
 
 module.exports.applyHmr = makeApplyHmr(args => {
   // Mark this file as reloadable

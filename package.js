@@ -6,36 +6,19 @@ Package.describe({
   documentation: 'README.md'
 });
 
-const hmrVersion = '0.13.2'
-
 Package.registerBuildPlugin({
   name: 'melte-compiler',
   use: [
-    'babel-compiler@7.3.4',
-    'caching-compiler@1.2.1',
     'ecmascript@0.12.7',
+    'zodern:melte-compiler'
   ],
   sources: [
-    'SvelteCompiler.js',
     'plugin.js'
   ],
   npmDependencies: {
     '@babel/runtime': '7.4.3',
     '@babel/parser': '7.4.3',
-    'find-up': '3.0.0',
-    htmlparser2: '3.10.1',
-    'postcss': '7.0.17',
-    'source-map': '0.5.6',
-    'recast': '0.19.0',
-    'periscopic': '2.0.2',
-    'svelte-hmr': hmrVersion,
-    'acorn': '7.4.0',
-    'svelte-preprocess': '4.7.0'
   }
-});
-
-Npm.depends({
-  'svelte-hmr': hmrVersion
 });
 
 Package.onUse(function (api) {
@@ -43,6 +26,7 @@ Package.onUse(function (api) {
   api.use('isobuild:compiler-plugin@1.0.0');
   api.use('ecmascript@0.12.7', 'client');
   api.use('tracker', 'client');
+  api.use('zodern:melte-compiler', 'client');
 
   api.addFiles('tracker.js', 'client');
 

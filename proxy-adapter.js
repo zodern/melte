@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV === "development") {
-  const proxyAdapter = require('svelte-hmr/runtime/proxy-adapter-dom.js');
+  const { proxyAdapter } = require('meteor/zodern:melte-compiler/hmr-runtime.js');
 
   module.exports = proxyAdapter;
 }
