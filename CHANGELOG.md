@@ -1,3 +1,7 @@
+## 1.4.2 - April 19, 2021
+
+- Move compiler into its own package, `zodern:melte-compiler` to allow other packages to use and extend it.
+
 ## 1.4.1 - April 17, 2021
 
 - Fix errors with the legacy web client
