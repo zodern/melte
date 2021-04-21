@@ -1,3 +1,7 @@
+## 1.4.3 - April 21, 2021
+
+- Fix error when svelte options are not in the app's package.json file
+
 ## 1.4.2 - April 19, 2021
 
 - Move compiler into its own package, `zodern:melte-compiler` to allow other packages to use and extend it.
