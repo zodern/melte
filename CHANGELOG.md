@@ -1,3 +1,7 @@
+## 1.4.4 - April 21, 2021
+
+- Fix `Cannot find module 'babylon'` error.
+
 ## 1.4.3 - April 21, 2021
 
 - Fix error when svelte options are not in the app's package.json file
