@@ -1,6 +1,6 @@
 Package.describe({
   name: 'zodern:melte',
-  version: '1.4.5-beta.1',
+  version: '1.4.5-beta.2',
   summary: 'Svelte compiler with tracker integration, HMR and Typescript support',
   git: 'https://github.com/zodern/melte.git',
   documentation: 'README.md'
@@ -10,7 +10,7 @@ Package.registerBuildPlugin({
   name: 'melte-compiler',
   use: [
     'ecmascript@0.12.7',
-    'zodern:melte-compiler@1.0.3-beta.1'
+    'zodern:melte-compiler@1.0.3-beta.2'
   ],
   sources: [
     'plugin.js'
