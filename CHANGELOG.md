@@ -1,3 +1,12 @@
+## 1.4.5 - December 27, 2021
+
+- Update `zodern:melte-compiler`:
+  - Fix loading typescript compiler
+  - Fix using `css` option
+  - Fix using post css
+  - Fix using optional chaining
+  - Fix HMR bugs
+
 ## 1.4.4 - April 21, 2021
 
 - Fix `Cannot find module 'babylon'` error.
