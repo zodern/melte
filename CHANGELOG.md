@@ -1,3 +1,9 @@
+## 1.5.0 - February 12, 2022
+
+- Update `zodern:melte-compiler`:
+  - Fix crash when file has a syntax error
+  - Fix source maps. If the svelte file uses typescript, there are still some issues with source maps
+
 ## 1.4.5 - December 27, 2021
 
 - Update `zodern:melte-compiler`:
