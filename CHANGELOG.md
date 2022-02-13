@@ -1,3 +1,8 @@
+## 1.5.1 - February 12, 2022
+
+- Update `zodern:melte-compiler`:
+  - Fix compiling tracker statements for SSR
+
 ## 1.5.0 - February 12, 2022
 
 - Update `zodern:melte-compiler`:
