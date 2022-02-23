@@ -1,3 +1,8 @@
+## 1.5.2 - February 23, 2022
+
+- Update `zodern:melte-compiler`:
+  - Fix crash when using old version of Svelte 3
+
 ## 1.5.1 - February 12, 2022
 
 - Update `zodern:melte-compiler`:
