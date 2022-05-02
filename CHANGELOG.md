@@ -1,3 +1,8 @@
+## 1.6.0 - May 2, 2022
+
+- Update `zodern:melte-compiler`:
+  - Support typescript in scripts with context="module"
+
 ## 1.5.2 - February 23, 2022
 
 - Update `zodern:melte-compiler`:
