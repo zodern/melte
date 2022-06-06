@@ -4,10 +4,16 @@ import sourcemap from 'source-map';
 import { parse, print, types } from 'recast';
 import acorn from 'recast/parsers/acorn';
 import typescript from 'recast/parsers/typescript';
+import coffeescript from 'coffescript';
+import less from 'less';
 import { analyze, extract_names } from 'periscopic';
 
-function createRecastParser(isTS = false) {
-  const parser = isTS ? typescript : acorn;
+function createRecastParser(lang = false) {
+
+  const parser = ({
+    'ts': typescript,
+    'coffee': coffeescript
+  })[lang] ?? acorn;
 
   return {
     parse(_, options) {
@@ -61,6 +67,20 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         this.tsVersion = tsPackage.version;
       } catch (e) {
         this.tsVersion = '<unknown>';
+      }
+
+      try {
+          let coffeePackage = require('coffeescript/package.json');
+        this.coffeeVersion = coffeePackage.version;
+      } catch (e) {
+        this.coffeeVersion = '<unknown>';
+      }
+
+      try {
+        let lessPackage = require('less/package.json');
+        this.lessVersion = lessPackage.version;
+      } catch (e) {
+        this.lessVersion = '<unknown>';
       }
 
       this.makeHot = createMakeHot({
@@ -127,6 +147,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         svelteVersion: this.svelte.VERSION,
         preprocessVersion: PREPROCESS_VERSION,
         tsVersion: this.tsVersion,
+        coffeeVersion: this.coffeeVersion,
+        lessVersion: this.lessVersion,
       },
     ];
   }
@@ -143,6 +165,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       PREPROCESS_VERSION,
       process.env.NODE_ENV === 'production',
       this.tsVersion,
+      this.coffeeVersion,
+      this.lessVersion,
       suffix
     ].join('-');
 
@@ -259,7 +283,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
             return;
           }
 
-          let ast = parse(content, { parser: createRecastParser(attributes.lang === 'ts') });
+          let ast = parse(content, { parser: createRecastParser(attributes.lang) });
 
           let modified = false;
           let uniqueIdCount = 0;
