@@ -94,6 +94,22 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     return this.ts;
   }
 
+  getCoffee() {
+    if (this.coffee === null) {
+      this.coffee = require('svelte-preprocess/dist/transformers/coffeescript').transformer;
+    }
+
+    return this.coffee;
+  }
+
+  getLess() {
+    if (this.less === null) {
+      this.less = require('svelte-preprocess/dist/transformers/less').transformer;
+    }
+
+    return this.less;
+  }
+
   hmrAvailable(file) {
     return typeof file.hmrAvailable === 'function' && file.hmrAvailable();
   }
@@ -334,18 +350,17 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
           const processedCode = modified ? print(ast).code : content;
 
-          return attributes.lang === 'ts'
-            ? this.getTs()({ content: processedCode, filename: path })
-            : { code: processedCode };
+          return ({
+            'ts': this.getTs()({ content: processedCode, filename: path }),
+            'coffee': this.getCoffee()({ content: processedCode, filename: path })
+          })[attributes.lang] ?? { code: processedCode };
+
         },
         style: async ({ content, attributes }) => {
-          if (this.postcss) {
-            if (attributes.lang == 'postcss') {
-              return {
-                code: await this.postcss.process(content, { from: undefined })
-              };
-            }
-          }
+          return ({
+            'postcss': { code: await this.postcss.process(content, { from: undefined }) },
+            'less': { code: await this.postcss.process(content, { from: undefined }) }
+          })[attributes.lang] ?? { code: content };
         }
       })));
     } catch (e) {
