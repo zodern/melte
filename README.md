@@ -83,18 +83,24 @@ Sort by:
 <p>{completedCount} completed</p>
 ```
 
+## Compatibility with rdb:svelte-meteor-data
+
+`$m` statements will not work reliably when melte is used together with [rdb:svelte-meteor-data](https://github.com/rdb/svelte-meteor-data). There are likely other side effects. You will have to decide for one package.
+
 ## Typescript
 
 To use typescript with svelte files:
 
-1) Add the typescript npm package to your app with `meteor npm i --save-dev typescript`
+1) Add the typescript npm package to your app with `meteor npm i --save-dev typescript svelte-preprocess`
 2) Add a `tsconfig.json` file. An example file can be found in the [Meteor docs](https://guide.meteor.com/build-tool.html#typescript)
+   - make sure to set `"preserveValueImports": true` to prevent components from being undefined and delete your `local` folder for it to take effect.
 3) In your svelte files, set the `lang="ts"` attribute for scripts:
 
 ```html
 <script lang="ts">
   let count = 0;
 
+  // must be on separate lines
   let doubled: number;
   $: doubled = count * 2;
 </script>
@@ -108,6 +114,8 @@ Melte does not check the types when compiling Svelte files. To check types, you 
 Learn more about using Typescript and Svelte from [Svelte's docs](https://github.com/sveltejs/language-tools/blob/master/docs/preprocessors/typescript.md).
 
 If you encounter the error `The "path" argument must be of type string. Received undefined`, this is usually from Typescript not being able to find the `tsconfig.json` file.
+
+Sourcemaps are broken and do not reference correct lines (e.g. for console.logs). Firefox (v108) can at least reference code from the compiled result, while Chrome (v108) is completely off.
 
 ## Options
 
