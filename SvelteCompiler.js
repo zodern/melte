@@ -4,10 +4,16 @@ import sourcemap from 'source-map';
 import { parse, print, types } from 'recast';
 import acorn from 'recast/parsers/acorn';
 import typescript from 'recast/parsers/typescript';
+import coffeescript from 'coffescript';
+import less from 'less';
 import { analyze, extract_names } from 'periscopic';
 
-function createRecastParser(isTS = false) {
-  const parser = isTS ? typescript : acorn;
+function createRecastParser(lang = false) {
+
+  const parser = ({
+    'ts': typescript,
+    'coffee': coffeescript
+  })[lang] ?? acorn;
 
   return {
     parse(_, options) {
@@ -63,6 +69,20 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         this.tsVersion = '<unknown>';
       }
 
+      try {
+          let coffeePackage = require('coffeescript/package.json');
+        this.coffeeVersion = coffeePackage.version;
+      } catch (e) {
+        this.coffeeVersion = '<unknown>';
+      }
+
+      try {
+        let lessPackage = require('less/package.json');
+        this.lessVersion = lessPackage.version;
+      } catch (e) {
+        this.lessVersion = '<unknown>';
+      }
+
       this.makeHot = createMakeHot({
         meta: 'module',
         walk: this.svelte.walk,
@@ -94,6 +114,22 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
     return this.ts;
   }
 
+  getCoffee() {
+    if (this.coffee === null) {
+      this.coffee = require('svelte-preprocess/dist/transformers/coffeescript').transformer;
+    }
+
+    return this.coffee;
+  }
+
+  getLess() {
+    if (this.less === null) {
+      this.less = require('svelte-preprocess/dist/transformers/less').transformer;
+    }
+
+    return this.less;
+  }
+
   hmrAvailable(file) {
     return typeof file.hmrAvailable === 'function' && file.hmrAvailable();
   }
@@ -111,6 +147,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
         svelteVersion: this.svelte.VERSION,
         preprocessVersion: PREPROCESS_VERSION,
         tsVersion: this.tsVersion,
+        coffeeVersion: this.coffeeVersion,
+        lessVersion: this.lessVersion,
       },
     ];
   }
@@ -127,6 +165,8 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
       PREPROCESS_VERSION,
       process.env.NODE_ENV === 'production',
       this.tsVersion,
+      this.coffeeVersion,
+      this.lessVersion,
       suffix
     ].join('-');
 
@@ -243,7 +283,7 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
             return;
           }
 
-          let ast = parse(content, { parser: createRecastParser(attributes.lang === 'ts') });
+          let ast = parse(content, { parser: createRecastParser(attributes.lang) });
 
           let modified = false;
           let uniqueIdCount = 0;
@@ -334,18 +374,17 @@ SvelteCompiler = class SvelteCompiler extends CachingCompiler {
 
           const processedCode = modified ? print(ast).code : content;
 
-          return attributes.lang === 'ts'
-            ? this.getTs()({ content: processedCode, filename: path })
-            : { code: processedCode };
+          return ({
+            'ts': this.getTs()({ content: processedCode, filename: path }),
+            'coffee': this.getCoffee()({ content: processedCode, filename: path })
+          })[attributes.lang] ?? { code: processedCode };
+
         },
         style: async ({ content, attributes }) => {
-          if (this.postcss) {
-            if (attributes.lang == 'postcss') {
-              return {
-                code: await this.postcss.process(content, { from: undefined })
-              };
-            }
-          }
+          return ({
+            'postcss': { code: await this.postcss.process(content, { from: undefined }) },
+            'less': { code: await this.postcss.process(content, { from: undefined }) }
+          })[attributes.lang] ?? { code: content };
         }
       })));
     } catch (e) {
