@@ -1,3 +1,8 @@
+## 1.6.1 - July 12, 2022
+
+- Update `zodern:melte-compiler`:
+  - Delay importing svelte until it is needed. This fixes errors from not finding svelte when publishing packages that depend on `zodern:melte`
+
 ## 1.6.0 - May 2, 2022
 
 - Update `zodern:melte-compiler`:
