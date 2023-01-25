@@ -10,7 +10,7 @@ Package.registerBuildPlugin({
   name: 'melte-compiler',
   use: [
     'ecmascript@0.12.7',
-    'zodern:melte-compiler@1.3.1'
+    'zodern:melte-compiler@1.4.0'
   ],
   sources: [
     'plugin.js'
