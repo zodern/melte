@@ -1,3 +1,10 @@
+## 1.7.0 - January 25, 2023
+
+- Update `zodern:melte-compiler`:
+  - Fix typescript sometimes removing imports for components
+  - Partial support for source maps for typescript 
+  - Fix crash when error compiling with babel
+
 ## 1.6.1 - July 12, 2022
 
 - Update `zodern:melte-compiler`:
