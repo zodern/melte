@@ -49,13 +49,10 @@ Example:
 const Todos = new Mongo.Collection('todos');
 
 let sortDirection = 1;
-let subReady = false;
 
 // Tracker will unsubscribe when the Svelte component is destroyed
-$m: {
-  let sub = Meteor.subscribe('todos');
-  subReady = sub.ready();
-}
+$m: sub = Meteor.subscribe('todos');
+$m: subReady = sub?.ready();
 
 // This will rerun whenever the documents are updated or sortDirection is changed
 $m: todos = Todos.find({}, { sort: { createdAt: sortDirection}}).fetch()
