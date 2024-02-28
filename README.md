@@ -52,7 +52,7 @@ let sortDirection = 1;
 
 // Tracker will unsubscribe when the Svelte component is destroyed
 $m: sub = Meteor.subscribe('todos');
-$m: subReady = sub?.ready();
+$m: subReady = sub.ready();
 
 // This will rerun whenever the documents are updated or sortDirection is changed
 $m: todos = Todos.find({}, { sort: { createdAt: sortDirection}}).fetch()
