@@ -33,6 +33,6 @@ Package.onUse(function (api) {
   api.imply([
     'ecmascript-runtime',
     'babel-runtime',
-    'promise'
+    'promise@0.11.2||1.0.0-beta.300-6'
   ]);
 });
