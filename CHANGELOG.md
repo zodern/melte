@@ -1,4 +1,4 @@
-## 1.7.1 - March 20, 2024
+## 1.7.1, 1.7.2 - March 20, 2024
 
 - Support Meteor 3
 - Update zodern:melte-compiler to 1.4.1 for Meteor 3 support
