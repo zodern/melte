@@ -1,4 +1,4 @@
-## 1.7.3 - March 19, 2025
+## 1.7.3, 1.7.4 - March 19, 2025
 
 - Support typescript 5
 
