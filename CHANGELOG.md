@@ -1,3 +1,7 @@
+## 1.7.3 - March 19, 2025
+
+- Support typescript 5
+
 ## 1.7.1, 1.7.2 - March 20, 2024
 
 - Support Meteor 3
