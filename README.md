@@ -2,7 +2,7 @@
 
 Build [cybernetically enhanced web apps](https://svelte.dev) with Meteor and Svelte.
 
-Based on [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte/pull/30) with these added features:
+Based on [meteor-svelte](https://github.com/meteor-svelte/meteor-svelte) with these added features:
 
 - Tracker statements
 - Support for hot module replacement (HMR) to update modified components without requiring a full page reload. Requires your app to use Meteor 2 and the [hot-module-replacement](https://docs.meteor.com/packages/hot-module-replacement.html) package.
